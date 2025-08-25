@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.21.xsd">
+
+    <changeSet id="1" author="petrovviacheslav">
+        <createTable tableName="users">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="TEXT"/>
+            <column name="email" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="second_factor_code" type="TEXT"/>
+            <column name="time_code" type="BIGINT"/>
+            <column name="verified" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="verified_cache" type="TEXT"/>
+        </createTable>
+
+
+        <createTable tableName="points">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="id_user" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="x" type="DOUBLE PRECISION">
+                <constraints nullable="false"/>
+            </column>
+            <column name="y" type="DOUBLE PRECISION">
+                <constraints nullable="false"/>
+            </column>
+            <column name="r" type="DOUBLE PRECISION">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="result" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="cur_time" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+
+        <addForeignKeyConstraint
+                baseTableName="points"
+                baseColumnNames="id_user"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_user"/>
+
+
+        <rollback>
+            <dropForeignKeyConstraint
+                    baseTableName="points"
+                    constraintName="fk_user"/>
+
+
+            <dropTable tableName="points"/>
+            <dropTable tableName="users"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

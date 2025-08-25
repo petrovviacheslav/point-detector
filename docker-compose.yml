@@ -1,0 +1,80 @@
+services:
+  psql:
+    image: postgres:13.3
+    container_name: postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  liquibase:
+    build: ./migrations
+    container_name: liquibase
+    environment:
+      LIQUIBASE_COMMAND_CHANGELOG_FILE: changelog-master.xml
+      LIQUIBASE_COMMAND_DRIVER: org.postgresql.Driver
+      LIQUIBASE_COMMAND_URL: ${DB_URL}
+      LIQUIBASE_COMMAND_USERNAME: ${DB_USER}
+      LIQUIBASE_COMMAND_PASSWORD: ${DB_PASSWORD}
+      LIQUIBASE_SEARCH_PATH: /liquibase/changelog
+    command:
+      update
+    restart: on-failure
+    depends_on:
+      - psql
+
+  prometheus:
+    build: ./prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+
+  backend:
+    build: backend/
+    container_name: backend
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      EMAIL: ${EMAIL}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
+    depends_on:
+      - psql
+      - liquibase
+
+  frontend:
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile
+      target: production
+    container_name: frontend
+    depends_on:
+      - backend
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data: {}
+
